@@ -34,12 +34,14 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background: linear-gradient(135deg, #2f3640 0%, #1e272e 100%);
+            background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .glass-container {
@@ -241,6 +243,7 @@
         .history-wrapper {
             overflow-x: auto;
             margin-top: 15px;
+            width: 100%;
         }
         .history-table {
             width: 100%;
@@ -269,6 +272,37 @@
             background: rgba(255,255,255,0.1);
             font-size: 12px;
             white-space: nowrap;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 500px) {
+            body {
+                padding: 10px;
+            }
+            .glass-container {
+                padding: 20px 15px;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .tab {
+                font-size: 12px;
+                padding: 8px 2px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            .input-group label {
+                font-size: 13px;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            .glass-container input, .glass-container select {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -330,9 +364,9 @@
             
             <div id="date-info" style="text-align: center; margin-bottom: 10px; color: var(--text-muted); font-size: 14px;"></div>
             
-            <div class="input-group" style="align-items: center; flex-direction: row; justify-content: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px;">
-                <input type="checkbox" id="record-is-holiday" style="width:20px; height:20px;">
-                <label for="record-is-holiday" style="margin:0; font-size:16px;">標記此日為假日 (Holiday) - 將不納入平常日平均</label>
+            <div class="input-group" style="align-items: center; flex-direction: row; justify-content: flex-start; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; flex-wrap: wrap;">
+                <input type="checkbox" id="record-is-holiday" style="width:24px; height:24px; flex-shrink: 0;">
+                <label for="record-is-holiday" style="margin:0; font-size:14px; flex: 1; word-wrap: break-word;">標記此日為假日 (Holiday) - 將不納入平常日平均</label>
             </div>
 
             <div id="record-flavors-container" style="margin-top: 15px;">
