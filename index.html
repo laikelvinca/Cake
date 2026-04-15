@@ -385,7 +385,7 @@
             <p style="text-align:center; font-size:14px; color:var(--text-muted);">列出您曾儲存過的所有生產與剩餘數據</p>
             
             <div style="text-align: center; margin-bottom: 10px;">
-                <button onclick="injectSampleData()" style="font-size:14px; padding:8px 15px; width: auto; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);">📥 載入 3-4 月範例資料</button>
+                <button onclick="injectSampleData()" style="font-size:14px; padding:8px 15px; width: auto; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);">📥 載入 3-4月 真實報表數據</button>
             </div>
             
             <div class="history-wrapper">
@@ -597,55 +597,65 @@
         }
 
         function injectSampleData() {
-            if (confirm("這將會加入 3 月 1 日至昨天 (4月12日) 的模擬日資料，如已有同天的舊資料會被覆蓋，確定載入？")) {
-                const tzoffset = (new Date()).getTimezoneOffset() * 60000; 
-                // Set loop range: Mar 1 to yesterday
-                let startDate = new Date(2026, 2, 1); // March 1 (Months are 0-indexed)
-                let endDate = new Date(2026, 3, 12);  // April 12
+            if (confirm("這將會讀取並寫入您提供的「3月至4月的實際打烊紀錄數據」，確定要載入嗎？")) {
+                const marchData = [
+                    {"date":"2026-03-01","weekday":0,"isHoliday":true,"flavors":{"original":{"created":315,"rem5pm":82,"remClose":0,"soldOutTime":"21:15"},"seasonal":{"created":42,"rem5pm":13,"remClose":4,"soldOutTime":""}}},
+                    {"date":"2026-03-02","weekday":1,"isHoliday":false,"flavors":{"original":{"created":204,"rem5pm":76,"remClose":11,"soldOutTime":""},"seasonal":{"created":41,"rem5pm":15,"remClose":2,"soldOutTime":""},"matcha":{"created":25,"rem5pm":10,"remClose":0,"soldOutTime":"18:20"}}},
+                    {"date":"2026-03-03","weekday":2,"isHoliday":false,"flavors":{"original":{"created":202,"rem5pm":93,"remClose":21,"soldOutTime":""},"seasonal":{"created":40,"rem5pm":20,"remClose":5,"soldOutTime":""},"chocolate":{"created":45,"rem5pm":16,"remClose":15,"soldOutTime":""}}},
+                    {"date":"2026-03-04","weekday":3,"isHoliday":false,"flavors":{"original":{"created":207,"rem5pm":89,"remClose":19,"soldOutTime":""},"seasonal":{"created":42,"rem5pm":33,"remClose":16,"soldOutTime":""},"matcha":{"created":0,"rem5pm":16,"remClose":1,"soldOutTime":""}}},
+                    {"date":"2026-03-05","weekday":4,"isHoliday":false,"flavors":{"original":{"created":189,"rem5pm":93,"remClose":13,"soldOutTime":""},"seasonal":{"created":42,"rem5pm":26,"remClose":1,"soldOutTime":""},"chocolate":{"created":36,"rem5pm":13,"remClose":16,"soldOutTime":""}}},
+                    {"date":"2026-03-06","weekday":5,"isHoliday":false,"flavors":{"original":{"created":307,"rem5pm":132,"remClose":50,"soldOutTime":""},"seasonal":{"created":56,"rem5pm":24,"remClose":11,"soldOutTime":""}}},
+                    {"date":"2026-03-07","weekday":6,"isHoliday":true,"flavors":{"original":{"created":312,"rem5pm":95,"remClose":0,"soldOutTime":"20:30"},"seasonal":{"created":70,"rem5pm":42,"remClose":0,"soldOutTime":""}}},
+                    {"date":"2026-03-08","weekday":0,"isHoliday":true,"flavors":{"original":{"created":275,"rem5pm":89,"remClose":0,"soldOutTime":"20:00"},"seasonal":{"created":27,"rem5pm":8,"remClose":10,"soldOutTime":"21:15"}}},
+                    {"date":"2026-03-09","weekday":1,"isHoliday":false,"flavors":{"original":{"created":0,"rem5pm":86,"remClose":6,"soldOutTime":""},"seasonal":{"created":0,"rem5pm":22,"remClose":0,"soldOutTime":"20:30"},"matcha":{"created":0,"rem5pm":12,"remClose":10,"soldOutTime":""}}},
+                    {"date":"2026-03-10","weekday":2,"isHoliday":false,"flavors":{"original":{"created":189,"rem5pm":103,"remClose":18,"soldOutTime":""},"seasonal":{"created":24,"rem5pm":14,"remClose":0,"soldOutTime":"21:25"},"chocolate":{"created":35,"rem5pm":16,"remClose":6,"soldOutTime":""}}},
+                    {"date":"2026-03-11","weekday":3,"isHoliday":false,"flavors":{"original":{"created":212,"rem5pm":100,"remClose":11,"soldOutTime":""},"seasonal":{"created":27,"rem5pm":11,"remClose":0,"soldOutTime":"20:20"},"matcha":{"created":25,"rem5pm":7,"remClose":0,"soldOutTime":"19:20"}}},
+                    {"date":"2026-03-12","weekday":4,"isHoliday":false,"flavors":{"original":{"created":223,"rem5pm":119,"remClose":14,"soldOutTime":""},"seasonal":{"created":41,"rem5pm":19,"remClose":5,"soldOutTime":""},"chocolate":{"created":35,"rem5pm":2,"remClose":0,"soldOutTime":"17:45"}}},
+                    {"date":"2026-03-13","weekday":5,"isHoliday":false,"flavors":{"original":{"created":246,"rem5pm":114,"remClose":14,"soldOutTime":""},"seasonal":{"created":41,"rem5pm":25,"remClose":0,"soldOutTime":"20:49"}}},
+                    {"date":"2026-03-14","weekday":6,"isHoliday":true,"flavors":{"original":{"created":411,"rem5pm":192,"remClose":38,"soldOutTime":""},"seasonal":{"created":55,"rem5pm":16,"remClose":0,"soldOutTime":"20:45"}}},
+                    {"date":"2026-03-15","weekday":0,"isHoliday":true,"flavors":{"original":{"created":292,"rem5pm":204,"remClose":57,"soldOutTime":""},"seasonal":{"created":69,"rem5pm":15,"remClose":0,"soldOutTime":"20:15"}}},
+                    {"date":"2026-03-16","weekday":1,"isHoliday":false,"flavors":{"original":{"created":160,"rem5pm":80,"remClose":19,"soldOutTime":""},"seasonal":{"created":55,"rem5pm":8,"remClose":0,"soldOutTime":"17:15"},"matcha":{"created":27,"rem5pm":2,"remClose":0,"soldOutTime":"17:30"}}},
+                    {"date":"2026-03-17","weekday":2,"isHoliday":false,"flavors":{"original":{"created":209,"rem5pm":78,"remClose":1,"soldOutTime":""},"seasonal":{"created":83,"rem5pm":27,"remClose":0,"soldOutTime":"19:15"},"chocolate":{"created":36,"rem5pm":9,"remClose":0,"soldOutTime":"18:15"}}},
+                    {"date":"2026-03-18","weekday":3,"isHoliday":false,"flavors":{"original":{"created":210,"rem5pm":66,"remClose":0,"soldOutTime":"19:45"},"seasonal":{"created":111,"rem5pm":36,"remClose":0,"soldOutTime":"19:45"},"matcha":{"created":25,"rem5pm":0,"remClose":0,"soldOutTime":"17:00"}}},
+                    {"date":"2026-03-19","weekday":4,"isHoliday":false,"flavors":{"original":{"created":267,"rem5pm":102,"remClose":5,"soldOutTime":""},"seasonal":{"created":138,"rem5pm":38,"remClose":0,"soldOutTime":"19:00"},"chocolate":{"created":47,"rem5pm":11,"remClose":0,"soldOutTime":"19:10"}}},
+                    {"date":"2026-03-20","weekday":5,"isHoliday":false,"flavors":{"original":{"created":364,"rem5pm":144,"remClose":0,"soldOutTime":"21:15"},"seasonal":{"created":163,"rem5pm":58,"remClose":0,"soldOutTime":"20:45"}}},
+                    {"date":"2026-03-21","weekday":6,"isHoliday":true,"flavors":{"original":{"created":421,"rem5pm":209,"remClose":29,"soldOutTime":""},"seasonal":{"created":137,"rem5pm":62,"remClose":0,"soldOutTime":"21:00"}}},
+                    {"date":"2026-03-22","weekday":0,"isHoliday":true,"flavors":{"original":{"created":281,"rem5pm":137,"remClose":0,"soldOutTime":"20:55"},"seasonal":{"created":140,"rem5pm":61,"remClose":0,"soldOutTime":"20:45"}}},
+                    {"date":"2026-03-23","weekday":1,"isHoliday":false,"flavors":{"original":{"created":172,"rem5pm":66,"remClose":6,"soldOutTime":""},"seasonal":{"created":84,"rem5pm":28,"remClose":0,"soldOutTime":"20:35"},"matcha":{"created":28,"rem5pm":0,"remClose":0,"soldOutTime":"17:15"}}},
+                    {"date":"2026-03-24","weekday":2,"isHoliday":false,"flavors":{"original":{"created":197,"rem5pm":77,"remClose":0,"soldOutTime":"21:05"},"seasonal":{"created":98,"rem5pm":49,"remClose":6,"soldOutTime":""},"chocolate":{"created":36,"rem5pm":16,"remClose":0,"soldOutTime":"21:10"}}},
+                    {"date":"2026-03-25","weekday":3,"isHoliday":false,"flavors":{"original":{"created":234,"rem5pm":92,"remClose":7,"soldOutTime":""},"seasonal":{"created":98,"rem5pm":45,"remClose":9,"soldOutTime":""},"matcha":{"created":28,"rem5pm":5,"remClose":0,"soldOutTime":"19:12"}}},
+                    {"date":"2026-03-26","weekday":4,"isHoliday":false,"flavors":{"original":{"created":226,"rem5pm":102,"remClose":32,"soldOutTime":""},"seasonal":{"created":68,"rem5pm":28,"remClose":0,"soldOutTime":""},"chocolate":{"created":47,"rem5pm":4,"remClose":0,"soldOutTime":"18:15"}}},
+                    {"date":"2026-03-27","weekday":5,"isHoliday":false,"flavors":{"original":{"created":270,"rem5pm":150,"remClose":15,"soldOutTime":""},"seasonal":{"created":126,"rem5pm":44,"remClose":0,"soldOutTime":"20:53"}}},
+                    {"date":"2026-03-28","weekday":6,"isHoliday":true,"flavors":{"original":{"created":348,"rem5pm":122,"remClose":14,"soldOutTime":""},"seasonal":{"created":140,"rem5pm":52,"remClose":0,"soldOutTime":"21:00"}}},
+                    {"date":"2026-03-29","weekday":0,"isHoliday":true,"flavors":{"original":{"created":263,"rem5pm":129,"remClose":27,"soldOutTime":""},"seasonal":{"created":110,"rem5pm":49,"remClose":3,"soldOutTime":""}}},
+                    {"date":"2026-03-30","weekday":1,"isHoliday":false,"flavors":{"original":{"created":146,"rem5pm":53,"remClose":6,"soldOutTime":""},"seasonal":{"created":75,"rem5pm":40,"remClose":1,"soldOutTime":""},"matcha":{"created":26,"rem5pm":11,"remClose":0,"soldOutTime":"21:00"}}},
+                    {"date":"2026-03-31","weekday":2,"isHoliday":false,"flavors":{"original":{"created":204,"rem5pm":94,"remClose":23,"soldOutTime":""},"seasonal":{"created":83,"rem5pm":31,"remClose":13,"soldOutTime":""},"chocolate":{"created":31,"rem5pm":13,"remClose":0,"soldOutTime":"19:30"}}},
+                    {"date":"2026-04-01","weekday":3,"isHoliday":false,"flavors":{"original":{"created":214,"rem5pm":113,"remClose":21,"soldOutTime":""},"seasonal":{"created":70,"rem5pm":36,"remClose":3,"soldOutTime":""},"matcha":{"created":28,"rem5pm":5,"remClose":0,"soldOutTime":"17:05"}}},
+                    {"date":"2026-04-02","weekday":4,"isHoliday":false,"flavors":{"original":{"created":234,"rem5pm":83,"remClose":0,"soldOutTime":"20:20"},"seasonal":{"created":70,"rem5pm":23,"remClose":0,"soldOutTime":"20:45"},"chocolate":{"created":60,"rem5pm":13,"remClose":0,"soldOutTime":"18:30"}}},
+                    {"date":"2026-04-03","weekday":5,"isHoliday":false,"flavors":{"original":{"created":360,"rem5pm":158,"remClose":7,"soldOutTime":""},"seasonal":{"created":168,"rem5pm":63,"remClose":14,"soldOutTime":""}}},
+                    {"date":"2026-04-04","weekday":6,"isHoliday":true,"flavors":{"original":{"created":354,"rem5pm":126,"remClose":0,"soldOutTime":"20:55"},"seasonal":{"created":152,"rem5pm":76,"remClose":21,"soldOutTime":""}}},
+                    {"date":"2026-04-05","weekday":0,"isHoliday":true,"flavors":{"original":{"created":335,"rem5pm":130,"remClose":0,"soldOutTime":"20:45"},"seasonal":{"created":97,"rem5pm":56,"remClose":25,"soldOutTime":""}}},
+                    {"date":"2026-04-06","weekday":1,"isHoliday":false,"flavors":{"original":{"created":224,"rem5pm":97,"remClose":11,"soldOutTime":""},"seasonal":{"created":68,"rem5pm":43,"remClose":14,"soldOutTime":""},"matcha":{"created":33,"rem5pm":11,"remClose":0,"soldOutTime":"20:23"}}},
+                    {"date":"2026-04-07","weekday":2,"isHoliday":false,"flavors":{"original":{"created":213,"rem5pm":102,"remClose":18,"soldOutTime":""},"seasonal":{"created":54,"rem5pm":15,"remClose":0,"soldOutTime":"20:05"},"chocolate":{"created":46,"rem5pm":26,"remClose":0,"soldOutTime":"20:40"}}},
+                    {"date":"2026-04-08","weekday":3,"isHoliday":false,"flavors":{"original":{"created":215,"rem5pm":79,"remClose":0,"soldOutTime":"21:02"},"seasonal":{"created":84,"rem5pm":45,"remClose":23,"soldOutTime":""},"matcha":{"created":42,"rem5pm":10,"remClose":0,"soldOutTime":"19:45"}}},
+                    {"date":"2026-04-09","weekday":4,"isHoliday":false,"flavors":{"original":{"created":270,"rem5pm":126,"remClose":33,"soldOutTime":""},"seasonal":{"created":56,"rem5pm":26,"remClose":0,"soldOutTime":"20:45"},"chocolate":{"created":68,"rem5pm":11,"remClose":0,"soldOutTime":"17:30"}}},
+                    {"date":"2026-04-10","weekday":5,"isHoliday":false,"flavors":{"original":{"created":216,"rem5pm":148,"remClose":13,"soldOutTime":""},"seasonal":{"created":84,"rem5pm":37,"remClose":0,"soldOutTime":"19:55"}}},
+                    {"date":"2026-04-11","weekday":6,"isHoliday":true,"flavors":{"original":{"created":383,"rem5pm":156,"remClose":6,"soldOutTime":""},"seasonal":{"created":126,"rem5pm":41,"remClose":11,"soldOutTime":""}}},
+                    {"date":"2026-04-12","weekday":0,"isHoliday":true,"flavors":{"original":{"created":250,"rem5pm":92,"remClose":0,"soldOutTime":"20:40"},"seasonal":{"created":82,"rem5pm":43,"remClose":21,"soldOutTime":""}}},
+                    {"date":"2026-04-13","weekday":1,"isHoliday":false,"flavors":{"original":{"created":170,"rem5pm":70,"remClose":2,"soldOutTime":""},"seasonal":{"created":69,"rem5pm":47,"remClose":34,"soldOutTime":""},"matcha":{"created":24,"rem5pm":3,"remClose":0,"soldOutTime":""}}},
+                    {"date":"2026-04-14","weekday":2,"isHoliday":false,"flavors":{"original":{"created":197,"rem5pm":114,"remClose":0,"soldOutTime":""},"seasonal":{"created":42,"rem5pm":36,"remClose":0,"soldOutTime":""},"chocolate":{"created":46,"rem5pm":32,"remClose":0,"soldOutTime":""}}}
+                ];
                 
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    let dLocal = new Date(d - tzoffset);
-                    const dateStr = dLocal.toISOString().slice(0, 10);
-                    const weekday = d.getDay();
-                    const isHoliday = (weekday === 0 || weekday === 6); // Set weekends as mock holiday
-                    
-                    const activeFlavors = getActiveFlavors(weekday);
-                    let flavorsData = {};
-
-                    activeFlavors.forEach(flavor => {
-                        const baseCreated = flavor === 'original' ? 25 : (flavor === 'seasonal' ? 18 : 12);
-                        // Random elements
-                        const created = baseCreated + Math.floor(Math.random() * 6);
-                        const rem5 = Math.floor(Math.random() * 4);
-                        const isSoldOut = Math.random() > 0.75;  // 25% chance of early sellout
-                        const remClose = isSoldOut ? 0 : Math.floor(Math.random() * (rem5 + 1));
-                        const soldOutTime = isSoldOut ? ['16:00', '16:30', '17:15', '17:45'][Math.floor(Math.random()*4)] : '';
-
-                        flavorsData[flavor] = {
-                            created: created,
-                            rem5pm: rem5,
-                            remClose: remClose,
-                            soldOutTime: soldOutTime
-                        };
-                    });
-
-                    const record = {
-                        date: dateStr,
-                        weekday: weekday,
-                        isHoliday: isHoliday,
-                        flavors: flavorsData
-                    };
-
-                    // Prevent duplicate if user re-clicks
-                    cakeHistory = cakeHistory.filter(r => r.date !== dateStr);
+                marchData.forEach(record => {
+                    cakeHistory = cakeHistory.filter(r => r.date !== record.date);
                     cakeHistory.push(record);
-                }
+                });
                 
                 // Sort descending
                 cakeHistory.sort((a,b) => new Date(b.date) - new Date(a.date));
                 localStorage.setItem('cakeHistory', JSON.stringify(cakeHistory));
                 
-                alert("✅ 範例資料已成功載入！");
+                alert("✅ 3-4月真實數據已成功寫入！");
                 renderHistoryTable(); // refresh table
             }
         }
