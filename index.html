@@ -352,7 +352,7 @@
                 <h3 style="color:var(--secondary); text-align:center; margin-bottom: 15px;">📊 建議生產分配</h3>
                 <div id="plan-list"></div>
                 <div class="total-batches" id="plan-total"></div>
-                <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 5px;">(每種口味依各自需求獨立計算，均為無條件進位湊滿 18 顆/批)</div>
+                <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 5px;">(每種口味依各自模具數獨立計算批次進位：原味18、巧克力12、其他14)</div>
             </div>
         </div>
 
@@ -368,8 +368,28 @@
             <div id="date-info" style="text-align: center; margin-bottom: 10px; color: var(--text-muted); font-size: 14px;"></div>
             
             <div class="input-group" style="align-items: center; flex-direction: row; justify-content: flex-start; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; flex-wrap: wrap;">
-                <input type="checkbox" id="record-is-holiday" style="width:24px; height:24px; flex-shrink: 0;">
-                <label for="record-is-holiday" style="margin:0; font-size:14px; flex: 1; word-wrap: break-word;">標記此日為假日 (Holiday) - 將不納入平常日平均</label>
+                <div style="display: flex; align-items: center; gap: 5px; flex: 1; min-width: 250px;">
+                    <input type="checkbox" id="record-is-holiday" style="width:24px; height:24px; flex-shrink: 0;">
+                    <label for="record-is-holiday" style="margin:0; font-size:14px; word-wrap: break-word;">標記此日為假日 (Holiday) - 將不納入平常期平均</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px; min-width: 140px; margin-top: 5px;">
+                    <label for="record-joiners" style="margin:0; font-size:14px; white-space: nowrap;">新人數 (Joiners):</label>
+                    <input type="number" id="record-joiners" value="0" min="0" max="10" style="width: 50px; padding: 5px; border-radius: 5px;">
+                </div>
+            </div>
+
+            <!-- 視覺輔助輸入區塊 -->
+            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center;">
+                <label for="camera-input" style="display:inline-block; font-size:14px; padding:10px 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; margin: 0;">
+                    📸 拍攝 / 上傳紙本報表對照
+                </label>
+                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
+                <div id="preview-container" style="display: none; margin-top: 15px; text-align: center;">
+                    <img id="preview-img" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                    <div style="margin-top: 10px;">
+                        <button onclick="clearPreview()" style="background: transparent; color: var(--primary); border: none; font-size: 14px; cursor: pointer;">❌ 隱藏 / 移除照片</button>
+                    </div>
+                </div>
             </div>
 
             <div id="record-flavors-container" style="margin-top: 15px;">
@@ -394,6 +414,7 @@
                         <tr>
                             <th>日期</th>
                             <th>口味</th>
+                            <th>新人</th>
                             <th>製造</th>
                             <th>5pm剩</th>
                             <th>打烊剩</th>
@@ -412,7 +433,6 @@
     <div class="toast" id="toast">✅ 儲存成功！</div>
 
     <script>
-        const BATCH_SIZE = 18;
         const FLAVOR_NAMES = {
             original: '原味 (Original)',
             seasonal: '時令 (Seasonal)',
@@ -442,6 +462,12 @@
             return active;
         }
 
+        function getBatchSize(flavor) {
+            if (flavor === 'original') return 18;
+            if (flavor === 'chocolate') return 12;
+            return 14;
+        }
+
         // ========================
         // Record Tab Logic
         // ========================
@@ -466,8 +492,10 @@
             const existingRecord = cakeHistory.find(r => r.date === dateStr);
             if (existingRecord) {
                 document.getElementById('record-is-holiday').checked = existingRecord.isHoliday;
+                document.getElementById('record-joiners').value = existingRecord.joiners || 0;
             } else {
                 document.getElementById('record-is-holiday').checked = false;
+                document.getElementById('record-joiners').value = 0;
             }
 
             const activeFlavors = getActiveFlavors(weekday);
@@ -537,6 +565,7 @@
                 date: dateStr,
                 weekday: weekday,
                 isHoliday: isHoliday,
+                joiners: parseInt(document.getElementById('record-joiners').value || 0),
                 flavors: flavorsData
             };
 
@@ -574,10 +603,12 @@
                 flavors.forEach((flavor, index) => {
                     const fData = record.flavors[flavor];
                     
-                    // Show date only on first row of the date group
+                    // Show date and joiners only on first row of the date group
                     let tdDate = '';
+                    let tdJoiner = '';
                     if (index === 0) {
                         tdDate = `<td rowspan="${flavors.length}" style="border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 2px solid rgba(255,255,255,0.3); vertical-align: middle;">${dateLabel}</td>`;
+                        tdJoiner = `<td rowspan="${flavors.length}" style="border-bottom: 2px solid rgba(255,255,255,0.3); vertical-align: middle;">${record.joiners || 0}</td>`;
                     }
                     
                     let trStyle = index === flavors.length - 1 ? 'border-bottom: 2px solid rgba(255,255,255,0.3);' : '';
@@ -586,6 +617,7 @@
                         <tr style="${trStyle}">
                             ${tdDate}
                             <td><span class="flavor-badge">${FLAVOR_NAMES[flavor].split(' ')[0]}</span></td>
+                            ${tdJoiner}
                             <td>${fData.created}</td>
                             <td>${fData.rem5pm}</td>
                             <td>${fData.remClose}</td>
@@ -664,17 +696,40 @@
         // Plan Tab Logic
         // ========================
         function initPlanTab() {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const tzoffset = (new Date()).getTimezoneOffset() * 60000; 
-            const localISOTime = (new Date(tomorrow - tzoffset)).toISOString().slice(0, 10);
+            const today = new Date();
+            const tzoffset = today.getTimezoneOffset() * 60000; 
+            const localISOTime = new Date(today - tzoffset).toISOString().slice(0, 10);
             
             document.getElementById('plan-date').value = localISOTime;
         }
 
-        function estimateDemand(created, remClose, soldOutTime) {
+        function estimateDemand(created, remClose, soldOutTime, hadJoiners) {
             if (soldOutTime && soldOutTime.trim() !== '') {
-                return Math.max(created, created * 1.2);
+                if (hadJoiners) {
+                    // Capacity constraint detected! Ignore stockout multiplier.
+                    return created;
+                }
+                
+                // Parse soldOutTime -> hour
+                const timeStr = soldOutTime.toLowerCase().replace(/\s/g, '');
+                let hour = 21; // Default to 21 (9 PM) if parsing fails
+                
+                const match = timeStr.match(/(\d+)/);
+                if (match) {
+                    hour = parseInt(match[1]);
+                    if (timeStr.includes('pm') && hour < 12) {
+                        hour += 12;
+                    } else if (!timeStr.includes('am') && hour < 10) {
+                        // Standard bakery hours heuristic for single digits
+                        hour += 12; 
+                    }
+                }
+                
+                // Tiered multiplier
+                if (hour <= 16) return created * 1.30;
+                if (hour <= 18) return created * 1.15;
+                if (hour <= 20) return created * 1.05;
+                return created * 1.0;
             }
             return Math.max(0, created - remClose);
         }
@@ -687,16 +742,34 @@
                 d.flavors[flavor]
             );
 
-            const recentThree = nonHolidayData.slice(-3);
+            // nonHolidayData is ordered Newest to Oldest (index 0 is newest)
+            const recentThree = nonHolidayData.slice(0, 3);
             
-            if (recentThree.length === 0) return 9; // 預設單一口味半批
+            if (recentThree.length === 0) return 9; // 預設
 
-            const total = recentThree.reduce((sum, record) => {
-                const fData = record.flavors[flavor];
-                return sum + estimateDemand(fData.created, fData.remClose, fData.soldOutTime);
-            }, 0);
-
-            return total / recentThree.length;
+            let totalWeightedDemand = 0;
+            
+            if (recentThree.length === 3) {
+                // index 0 (newest): 50%, index 1: 30%, index 2 (oldest): 20%
+                const weights = [0.5, 0.3, 0.2];
+                recentThree.forEach((record, index) => {
+                    const fData = record.flavors[flavor];
+                    const demand = estimateDemand(fData.created, fData.remClose, fData.soldOutTime, record.joiners > 0);
+                    totalWeightedDemand += demand * weights[index];
+                });
+                return totalWeightedDemand;
+            } else if (recentThree.length === 2) {
+                const weights = [0.6, 0.4];
+                recentThree.forEach((record, index) => {
+                    const fData = record.flavors[flavor];
+                    const demand = estimateDemand(fData.created, fData.remClose, fData.soldOutTime, record.joiners > 0);
+                    totalWeightedDemand += demand * weights[index];
+                });
+                return totalWeightedDemand;
+            } else {
+                const fData = recentThree[0].flavors[flavor];
+                return estimateDemand(fData.created, fData.remClose, fData.soldOutTime, recentThree[0].joiners > 0);
+            }
         }
 
         function updatePlanFlavors() {}
@@ -730,9 +803,22 @@
                 // 平常日平均需求度 -> 套用假日倍率 -> 套用新人係數
                 const adjustedDemand = baseAvg * holidayMultiplier * joinerMultiplier;
                 
-                // 每個口味獨立算批次
-                const batchesForFlavor = Math.ceil(adjustedDemand / BATCH_SIZE);
-                const cakesProduced = batchesForFlavor * BATCH_SIZE;
+                const bSize = getBatchSize(flavor);
+                
+                // 30% Ceiling Threshold Logic
+                const remainder = adjustedDemand % bSize;
+                let batchesForFlavor = Math.floor(adjustedDemand / bSize);
+                
+                if (remainder > (bSize * 0.3)) {
+                    batchesForFlavor += 1;
+                }
+                
+                // 需求不為0時最少保底1批
+                if (batchesForFlavor === 0 && adjustedDemand > 0) {
+                    batchesForFlavor = 1;
+                }
+                
+                const cakesProduced = batchesForFlavor * bSize;
 
                 totalBatchesGlobal += batchesForFlavor;
                 totalCakesGlobal += cakesProduced;
@@ -761,6 +847,28 @@
                     .catch(err => console.log('Service Worker 註冊失敗:', err));
             });
         }
+
+        // ========================
+        // Camera Preview Logic
+        // ========================
+        document.getElementById('camera-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('preview-img').src = event.target.result;
+                    document.getElementById('preview-container').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function clearPreview() {
+            document.getElementById('camera-input').value = '';
+            document.getElementById('preview-container').style.display = 'none';
+            document.getElementById('preview-img').src = '';
+        }
+
     </script>
 </body>
 </html>
