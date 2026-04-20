@@ -735,17 +735,27 @@
         }
 
         function getFlavorAverage(targetWeekday, flavor) {
-            const nonHolidayData = cakeHistory.filter(d => 
+            let targetData = cakeHistory.filter(d => 
                 d.weekday === targetWeekday && 
                 !d.isHoliday && 
                 d.flavors && 
                 d.flavors[flavor]
             );
 
-            // nonHolidayData is ordered Newest to Oldest (index 0 is newest)
-            const recentThree = nonHolidayData.slice(0, 3);
+            // 若該星期幾的所有紀錄都被標記為「假日」而被過濾掉（例如六日全被標為假日）
+            // 則啟動防呆機制：忽略假日標籤，直接抓取該星期幾的所有歷史資料作為基準。
+            if (targetData.length === 0) {
+                targetData = cakeHistory.filter(d => 
+                    d.weekday === targetWeekday && 
+                    d.flavors && 
+                    d.flavors[flavor]
+                );
+            }
+
+            // data is ordered Newest to Oldest (index 0 is newest)
+            const recentThree = targetData.slice(0, 3);
             
-            if (recentThree.length === 0) return 9; // 預設
+            if (recentThree.length === 0) return 9; // 真的一筆都沒有才預設 9 顆
 
             let totalWeightedDemand = 0;
             
