@@ -803,6 +803,14 @@
                 joinerMultiplier = Math.max(0, joinerMultiplier);
             }
 
+            // Find previous day's record for carryover calculation
+            const prevDate = new Date(targetDate);
+            prevDate.setDate(prevDate.getDate() - 1);
+            const prevDateStr = prevDate.getFullYear() + '-' + 
+                String(prevDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(prevDate.getDate()).padStart(2, '0');
+            const prevRecord = cakeHistory.find(r => r.date === prevDateStr);
+
             let totalBatchesGlobal = 0;
             let totalCakesGlobal = 0;
             let html = '';
@@ -813,18 +821,25 @@
                 // 平常日平均需求度 -> 套用假日倍率 -> 套用新人係數
                 const adjustedDemand = baseAvg * holidayMultiplier * joinerMultiplier;
                 
+                // 前日打烊剩餘 (carryover) 可延續使用，減少當日所需生產量
+                let carryover = 0;
+                if (prevRecord && prevRecord.flavors && prevRecord.flavors[flavor]) {
+                    carryover = prevRecord.flavors[flavor].remClose || 0;
+                }
+                const netDemand = Math.max(0, adjustedDemand - carryover);
+                
                 const bSize = getBatchSize(flavor);
                 
                 // 30% Ceiling Threshold Logic
-                const remainder = adjustedDemand % bSize;
-                let batchesForFlavor = Math.floor(adjustedDemand / bSize);
+                const remainder = netDemand % bSize;
+                let batchesForFlavor = Math.floor(netDemand / bSize);
                 
                 if (remainder > (bSize * 0.3)) {
                     batchesForFlavor += 1;
                 }
                 
                 // 需求不為0時最少保底1批
-                if (batchesForFlavor === 0 && adjustedDemand > 0) {
+                if (batchesForFlavor === 0 && netDemand > 0) {
                     batchesForFlavor = 1;
                 }
                 
@@ -833,10 +848,17 @@
                 totalBatchesGlobal += batchesForFlavor;
                 totalCakesGlobal += cakesProduced;
 
+                const carryoverNote = carryover > 0 
+                    ? `<div style="font-size:12px; color:var(--text-muted); margin-top:4px;">預估需求 ${Math.round(adjustedDemand)} − 前日剩餘 ${carryover} = 淨需求 ${Math.round(netDemand)}</div>`
+                    : `<div style="font-size:12px; color:var(--text-muted); margin-top:4px;">預估需求 ${Math.round(adjustedDemand)}（前日無剩餘）</div>`;
+
                 html += `
-                    <div class="plan-item">
-                        <span>${FLAVOR_NAMES[flavor]}</span>
-                        <span style="color:var(--secondary); font-weight:bold;">${batchesForFlavor} 批 (${cakesProduced} 顆)</span>
+                    <div class="plan-item" style="flex-direction:column;">
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span>${FLAVOR_NAMES[flavor]}</span>
+                            <span style="color:var(--secondary); font-weight:bold;">${batchesForFlavor} 批 (${cakesProduced} 顆)</span>
+                        </div>
+                        ${carryoverNote}
                     </div>
                 `;
             });
