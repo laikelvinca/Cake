@@ -390,10 +390,10 @@
                     <img id="preview-img" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
                     <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
                         <button onclick="clearPreview()" style="background: rgba(255,255,255,0.1); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.2); font-size: 14px; cursor: pointer; width: auto; padding: 8px 15px; border-radius: 6px;">❌ 移除照片</button>
-                        <button id="btn-auto-import" onclick="autoImportImage()" style="background: linear-gradient(45deg, #a29bfe, #6c5ce7); color: white; border: none; font-size: 14px; cursor: pointer; width: auto; padding: 8px 15px; border-radius: 6px; box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4);">✨ Auto-Import (Claude AI)</button>
+                        <button id="btn-auto-import" onclick="autoImportImage()" style="background: linear-gradient(45deg, #a29bfe, #6c5ce7); color: white; border: none; font-size: 14px; cursor: pointer; width: auto; padding: 8px 15px; border-radius: 6px; box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4);">✨ Auto-Import (AI)</button>
                     </div>
                     <div id="ai-loading" style="display: none; margin-top: 10px; color: var(--secondary); font-size: 13px;">
-                        ⏳ Claude AI 正在讀取並解析手寫數字，請稍候... / Reading handwritten numbers...
+                        ⏳ AI 正在讀取並解析手寫數字，請稍候...
                     </div>
                 </div>
             </div>
@@ -440,11 +440,23 @@
             <p style="text-align:center; font-size:14px; color:var(--text-muted); margin-bottom: 15px;">顯示最近 14 天的數據變化</p>
             
             <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <canvas id="demandChart" height="250"></canvas>
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size: 15px; font-weight: bold; color: var(--secondary);">📈 每日實際銷售量 Daily Demand</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">各口味每天實際賣出的數量（已售完者估算）<br>Estimated units sold per flavor per day</div>
+                </div>
+                <div style="position: relative; height: 250px;">
+                    <canvas id="demandChart"></canvas>
+                </div>
             </div>
             
             <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
-                <canvas id="wasteChart" height="250"></canvas>
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size: 15px; font-weight: bold; color: var(--secondary);">🗑️ 每日打烊剩餘量 Closing Waste</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">打烊時各口味未售出的數量（越低越好）<br>Unsold cakes at closing — lower is better</div>
+                </div>
+                <div style="position: relative; height: 250px;">
+                    <canvas id="wasteChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -1180,13 +1192,15 @@
         }
 
         async function autoImportImage() {
+            const apiKey = 'AIzaSyAoeMUwh5rmoPsJziYEG49ZLMLbxFtCj-g';
+
             if (!currentBase64Image) {
-                alert("請先拍照或上傳報表照片！\nPlease take or upload a photo first.");
+                alert("請先拍照或上傳報表照片！");
                 return;
             }
 
             const dateStr = document.getElementById('record-date').value;
-            if (!dateStr) return alert("請先選擇紀錄日期！\nPlease select a date first.");
+            if (!dateStr) return alert("請先選擇紀錄日期！");
 
             const parts = dateStr.split('-');
             const d = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -1212,11 +1226,11 @@ The flavors are identified by these letters inside each cell:
 - M = matcha (抹茶)
 - C = chocolate (巧克力)
 
-Extract the data ONLY for the row labeled "${dateQuery}".
+Extract the data ONLY for the row labeled "${dateQuery}". 
 If a flavor is not present in that row, return 0 for numbers and empty string for soldOutTime.
 For the "Unsold" column: if a time is written, put it in 'soldOutTime' and leave 'remClose' as 0 (unless a specific unsold number is also clearly stated).
 
-Return ONLY a valid JSON object with no markdown, no backticks, no explanation — just raw JSON:
+Return ONLY a valid JSON object matching exactly this structure, with no markdown code blocks, no backticks, just the raw JSON:
 {
   "original": { "created": 0, "rem5pm": 0, "remClose": 0, "soldOutTime": "" },
   "seasonal": { "created": 0, "rem5pm": 0, "remClose": 0, "soldOutTime": "" },
@@ -1224,43 +1238,32 @@ Return ONLY a valid JSON object with no markdown, no backticks, no explanation �
   "chocolate": { "created": 0, "rem5pm": 0, "remClose": 0, "soldOutTime": "" }
 }`;
 
+            const requestBody = {
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: currentMimeType, data: currentBase64Image } }
+                    ]
+                }],
+                generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+            };
+
             try {
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
-                        max_tokens: 1000,
-                        messages: [{
-                            role: 'user',
-                            content: [
-                                {
-                                    type: 'image',
-                                    source: {
-                                        type: 'base64',
-                                        media_type: currentMimeType,
-                                        data: currentBase64Image
-                                    }
-                                },
-                                { type: 'text', text: prompt }
-                            ]
-                        }]
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`API 請求失敗 / API request failed: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`API Request failed: ${response.status} ${response.statusText}`);
 
                 const data = await response.json();
-                const textRes = data.content.find(b => b.type === 'text')?.text || '';
-                const clean = textRes.replace(/```json|```/g, '').trim();
-
+                const textRes = data.candidates[0].content.parts[0].text;
                 let parsed;
                 try {
-                    parsed = JSON.parse(clean);
+                    parsed = JSON.parse(textRes);
                 } catch(e) {
-                    throw new Error("AI 回傳格式錯誤 / AI returned invalid JSON: " + textRes);
+                    throw new Error("AI returned invalid JSON: " + textRes);
                 }
 
                 const flavors = ['original', 'seasonal', 'matcha', 'chocolate'];
@@ -1289,11 +1292,11 @@ Return ONLY a valid JSON object with no markdown, no backticks, no explanation �
                     }
                 });
 
-                alert("✨ Claude AI 解析完成！請核對畫面數字是否與照片相符。\nDone! Please verify the numbers match the photo.");
+                alert("✨ AI 解析完成！請核對畫面上的數字是否與照片相符。");
 
             } catch (err) {
                 console.error(err);
-                alert("解析失敗 / Parse failed: " + err.message);
+                alert("解析失敗：" + err.message);
             } finally {
                 document.getElementById('btn-auto-import').disabled = false;
                 document.getElementById('ai-loading').style.display = 'none';
